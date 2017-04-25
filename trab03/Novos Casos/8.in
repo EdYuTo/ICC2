@@ -1,0 +1,25 @@
+2
+Copa Bicho 2017
+6
+Capivara
+Porco
+Leao
+Calouro
+Peixe
+Tubarao
+3
+Capivara#1@1#Porco
+Leao#2@2#Calouro
+Peixe#3@3#Tubarao
+Campeonato X 1920
+3
+IV de Jau
+Caramuru
+Sao Valentin
+6
+IV de Jau#1@5#Caramuru
+Sao Valentin#1@1#IV de Jau
+Caramuru#0@2#Sao Valentin
+Caramuru#0@0#IV de Jau
+IV de Jau#1@0#Sao Valentin
+Sao Valentin#3@3#Caramuru

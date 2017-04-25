@@ -1,0 +1,220 @@
+//EDSON YUDI TOMA 9791305
+
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+typedef struct times {
+   char *nome;
+   int pontos;
+   int njogos;
+   int nvitorias;
+   int nempates;
+   int nderrotas;
+   int difgols;
+   int golsM;
+   int golsS;
+} TIMES;
+
+typedef struct torneio {
+   char *nome;
+   char **tabela;
+   int njogos;
+   int ntimes;
+   TIMES *times;
+} TORNEIO;
+
+void apagarTO (TORNEIO torneio) {
+   free(torneio.nome);
+   for (int i = 0; i < torneio.ntimes; i++)
+      free(torneio.times[i].nome);
+   free(torneio.times);
+   for (int i = 0; i < torneio.njogos; i++)
+      free(torneio.tabela[i]);
+   free(torneio.tabela);
+}
+
+void imprimirTO (TORNEIO *torneio, int num) {
+   for (int i = 0; i < num; i++) {
+      printf("%s\n", torneio[i].nome);
+      for (int j = 0; j< torneio[i].ntimes; j++) 
+         printf("%d) %s %dp, %dg (%d-%d-%d), %dgd (%d-%d)\n", j+1, torneio[i].times[j].nome, torneio[i].times[j].pontos, torneio[i].times[j].njogos, 
+               torneio[i].times[j].nvitorias, torneio[i].times[j].nempates, torneio[i].times[j].nderrotas, torneio[i].times[j].difgols, 
+               torneio[i].times[j].golsM, torneio[i].times[j].golsS);
+      if (i < num - 1)
+         printf("\n");
+   }
+}
+
+char *read() {
+   char c, *string = (char *)malloc(sizeof(char)*128);
+   int i = 0;
+
+   do {
+      c = fgetc(stdin);
+      string[i++] = c;
+   } while (c != '\n' && c != EOF);
+   string[--i] = '\0';
+
+   if (string[--i] == '\r')
+      string[i] = '\0';
+
+   return string;
+}
+
+void readGame (char *jogo, char **nome1, int *gols_favor, int *gols_contra, char **nome2) {
+   char c, gols[10];
+   int i = 0, j = 0;;
+   do {
+      c = jogo[i++];
+      *(*nome1+j++) = c;
+   } while (c != '#');
+   *(*nome1+j-1) = '\0';
+   
+   j = 0;
+   do {
+      c = jogo[i++];
+      gols[j++] = c;
+   } while (c != '@');
+   gols[--j] = '\0';
+   *gols_favor = atoi(gols);
+
+   j = 0;
+   do {
+      c = jogo[i++];
+      gols[j++] = c;
+   } while (c != '#');
+   gols[--j] = '\0';
+   *gols_contra = atoi(gols);
+
+   j = 0;
+   do {
+      c = jogo[i++];
+      *(*nome2+j++) = c;
+   } while (c != '\0');
+}
+
+void distributepoints (TIMES *times, char *nome, int gols_favor, int gols_contra) {
+   int j = 0;
+   while (strcmp(nome, times[j].nome))
+      j++;
+   times[j].njogos++;
+   times[j].golsM += gols_favor;
+   times[j].golsS += gols_contra;
+   times[j].difgols += (gols_favor - gols_contra);
+   if (gols_favor > gols_contra) {
+      times[j].nvitorias++;
+      times[j].pontos += 3;
+   }
+   else if (gols_favor == gols_contra) {
+      times[j].nempates++;
+      times[j].pontos++;
+   }
+   else
+      times[j].nderrotas++;
+}
+
+void makepoints (TORNEIO torneio) {
+   int gols_favor, gols_contra, i;
+   char *nome1 = (char *)malloc(sizeof(char) * 32);
+   char *nome2 = (char *)malloc(sizeof(char) * 32);
+
+   for (i = 0; i < torneio.njogos; i++) {
+      readGame(torneio.tabela[i], &nome1, &gols_favor, &gols_contra, &nome2);
+      distributepoints(torneio.times, nome1, gols_favor, gols_contra);
+      distributepoints(torneio.times, nome2, gols_contra, gols_favor);
+   } 
+   free(nome1);
+   free(nome2);
+}
+
+void sortTournament (TIMES *times, int n) {
+   int i, j;
+   TIMES aux;
+   for (i = 0; i < n; i++) {
+      for (j = i; j < n; j++) {
+         if (times[j].pontos > times[i].pontos) {
+            aux = times[i];
+            times[i] = times[j];
+            times[j] = aux;
+         }
+         else if (times[j].pontos == times[i].pontos) {
+            if (times[j].nvitorias > times[i].nvitorias) {
+               aux = times[i];
+               times[i] = times[j];
+               times[j] = aux;
+            }
+            else if (times[j].nvitorias == times[i].nvitorias) {
+               if (times[j].difgols > times[i].difgols) {
+                  aux = times[i];
+                  times[i] = times[j];
+                  times[j] = aux;
+               }
+               else if (times[j].difgols == times[i].difgols) {
+                  if (times[j].golsM > times[i].golsM) {
+                     aux = times[i];
+                     times[i] = times[j];
+                     times[j] = aux;
+                  }
+                  else if (times[j].golsM == times[i].golsM) {
+                     if (times[j].njogos < times[i].njogos) {
+                        aux = times[i];
+                        times[i] = times[j];
+                        times[j] = aux;
+                     }
+                     else if (times[j].njogos == times[i].njogos) {
+                        if (strcmp(times[j].nome, times[i].nome) < 0) {
+                           aux = times[i];
+                           times[i] = times[j];
+                           times[j] = aux;
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+   } 
+}
+
+int main (int argc, char *argv[ ]) {
+   int n, t, g, i, j;
+
+   scanf ("%d\n", &n);
+   TORNEIO *torneios = (TORNEIO *)malloc(sizeof(TORNEIO)*n);
+
+   for (i = 0; i < n; i++) {
+      torneios[i].nome = read();
+
+      scanf ("%d\n", &t);
+      torneios[i].ntimes = t;
+      torneios[i].times = (TIMES *)malloc(sizeof(TIMES)*t);
+      for (j = 0; j < t; j++) {
+         torneios[i].times[j].nome = read();
+         torneios[i].times[j].pontos = 0;
+         torneios[i].times[j].njogos = 0;
+         torneios[i].times[j].nvitorias = 0;
+         torneios[i].times[j].nempates = 0;
+         torneios[i].times[j].nderrotas = 0;
+         torneios[i].times[j].difgols = 0;
+         torneios[i].times[j].golsM = 0;
+         torneios[i].times[j].golsS = 0;
+      }
+      scanf ("%d\n", &g);
+      torneios[i].njogos = g;
+      torneios[i].tabela =  (char **)malloc(sizeof(char*)*g);
+      for (j = 0; j < g; j++)
+         torneios[i].tabela[j] = read();
+   }
+   for (i = 0; i < n; i++){
+      makepoints(torneios[i]);
+      sortTournament(torneios[i].times, torneios[i].ntimes);
+   }
+   imprimirTO(torneios, n);
+
+   for (i = 0; i < n; i++)
+      apagarTO(torneios[i]);
+   free(torneios);
+
+   return 0;
+}
